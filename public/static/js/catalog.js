@@ -1,327 +1,214 @@
-// Catalog JavaScript
+// Premium Catalog JavaScript
 
-let allProducts = [];
-let isAuthenticated = false;
-let filters = {
-    category: null,
-    strainTypes: [],
-    thcRanges: [],
-    search: ''
-};
+// Initialize cart from localStorage
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
-// Initialize catalog
-document.addEventListener('DOMContentLoaded', async () => {
-    await checkAuthStatus();
-    await loadCategories();
-    await loadProducts();
-    setupEventListeners();
-    updateCartCount();
-});
-
-async function checkAuthStatus() {
-    try {
-        const response = await fetch('/api/auth/check', {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        isAuthenticated = data.authenticated;
-        
-        // Update UI based on auth status
-        if (isAuthenticated) {
-            document.getElementById('login-notice').classList.add('hidden');
-            document.getElementById('user-menu').innerHTML = `
-                <div class="flex items-center space-x-4">
-                    <a href="/orders" class="text-gray-700 hover:text-green-600 font-medium">My Orders</a>
-                    <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                    </button>
-                </div>
-            `;
+// Update cart count
+function updateCartCount() {
+    const cartCount = document.getElementById('cart-count');
+    if (cartCount) {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        if (totalItems > 0) {
+            cartCount.textContent = totalItems;
+            cartCount.classList.remove('hidden');
         } else {
-            document.getElementById('login-notice').classList.remove('hidden');
+            cartCount.classList.add('hidden');
+        }
+    }
+}
+
+// Load products
+async function loadProducts() {
+    const grid = document.getElementById('products-grid');
+    if (!grid) return;
+
+    try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+
+        if (products.length === 0) {
+            displaySampleProducts(grid);
+        } else {
+            displayProducts(products, grid);
         }
     } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('Error loading products:', error);
+        displaySampleProducts(grid);
     }
 }
 
-async function loadCategories() {
-    try {
-        const response = await fetch('/api/products/categories/all');
-        const categories = await response.json();
-        
-        const container = document.getElementById('categories-filter');
-        container.innerHTML = `
-            <label class="flex items-center">
-                <input type="radio" name="category" value="" checked class="category-filter mr-2">
-                <span>All Categories</span>
-            </label>
-        `;
-        
-        categories.forEach(category => {
-            container.innerHTML += `
-                <label class="flex items-center">
-                    <input type="radio" name="category" value="${category.slug}" class="category-filter mr-2">
-                    <span>${category.name}</span>
-                </label>
-            `;
-        });
-    } catch (error) {
-        console.error('Failed to load categories:', error);
-    }
-}
-
-async function loadProducts() {
-    document.getElementById('loading').classList.remove('hidden');
-    document.getElementById('products-grid').innerHTML = '';
-    document.getElementById('no-products').classList.add('hidden');
-    
-    try {
-        let url = '/api/products?';
-        if (filters.category) url += `category=${filters.category}&`;
-        if (filters.search) url += `search=${encodeURIComponent(filters.search)}&`;
-        
-        const response = await fetch(url, {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        
-        allProducts = data.products || [];
-        isAuthenticated = data.authenticated;
-        
-        applyFilters();
-    } catch (error) {
-        console.error('Failed to load products:', error);
-        document.getElementById('products-grid').innerHTML = '<p class="text-red-500">Failed to load products</p>';
-    } finally {
-        document.getElementById('loading').classList.add('hidden');
-    }
-}
-
-function applyFilters() {
-    let filteredProducts = [...allProducts];
-    
-    // Apply strain type filter
-    if (filters.strainTypes.length > 0) {
-        filteredProducts = filteredProducts.filter(p => 
-            filters.strainTypes.includes(p.strain_type)
-        );
-    }
-    
-    // Apply THC range filter
-    if (filters.thcRanges.length > 0) {
-        filteredProducts = filteredProducts.filter(p => {
-            const thc = p.thc_percentage || 0;
-            return filters.thcRanges.some(range => {
-                if (range === '0-15') return thc >= 0 && thc <= 15;
-                if (range === '15-20') return thc > 15 && thc <= 20;
-                if (range === '20-25') return thc > 20 && thc <= 25;
-                if (range === '25+') return thc > 25;
-                return false;
-            });
-        });
-    }
-    
-    // Apply sorting
-    const sortValue = document.getElementById('sort-select').value;
-    if (sortValue === 'name') {
-        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortValue === 'thc') {
-        filteredProducts.sort((a, b) => (b.thc_percentage || 0) - (a.thc_percentage || 0));
-    } else if (sortValue === 'price' && isAuthenticated) {
-        filteredProducts.sort((a, b) => (a.wholesale_price || a.price || 0) - (b.wholesale_price || b.price || 0));
-    }
-    
-    displayProducts(filteredProducts);
-}
-
-function displayProducts(products) {
-    const container = document.getElementById('products-grid');
-    
-    if (products.length === 0) {
-        document.getElementById('no-products').classList.remove('hidden');
-        container.innerHTML = '';
-        return;
-    }
-    
-    document.getElementById('no-products').classList.add('hidden');
-    container.innerHTML = products.map(product => createProductCard(product)).join('');
-}
-
-function createProductCard(product) {
-    const imageUrl = product.image_url || `/static/images/${product.name.toLowerCase().replace(/\s+/g, '-')}.png`;
-    const priceDisplay = isAuthenticated && !product.requiresLogin
-        ? `<span class="text-xl font-bold text-green-600">$${product.wholesale_price || product.price}/unit</span>`
-        : `<button onclick="window.location.href='/login'" class="text-sm text-blue-600 hover:underline">Login for pricing</button>`;
-    
-    return `
-        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
-            <div class="relative">
-                <img src="${imageUrl}" alt="${product.name}" class="w-full h-48 object-cover" onerror="this.src='/static/images/logo.png'">
-                ${product.featured ? '<span class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded">Featured</span>' : ''}
+// Display products
+function displayProducts(products, container) {
+    container.innerHTML = products.map(product => `
+        <div class="product-card hover-lift">
+            <div class="product-image">
+                <img src="${product.image || '/static/images/product-placeholder.jpg'}" alt="${product.name}" loading="lazy">
+                ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
             </div>
-            <div class="p-4">
-                <h3 class="text-lg font-semibold mb-2">${product.name}</h3>
-                <div class="flex gap-2 mb-2">
-                    ${product.strain_type ? `<span class="inline-block px-2 py-1 text-xs bg-green-100 text-green-700 rounded">${product.strain_type}</span>` : ''}
-                    ${product.thc_percentage ? `<span class="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded">THC: ${product.thc_percentage}%</span>` : ''}
-                </div>
-                <p class="text-sm text-gray-600 mb-3 line-clamp-2">${product.description || ''}</p>
-                ${product.unit_size ? `<p class="text-sm text-gray-500 mb-2">Size: ${product.unit_size}</p>` : ''}
-                <div class="flex justify-between items-center mt-4">
-                    ${priceDisplay}
-                    <div class="flex gap-2">
-                        ${product.pdf_page ? `
-                            <button onclick="viewProductInfo(${product.id})" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition" title="More Info">
-                                <i class="fas fa-info-circle"></i>
-                            </button>
-                        ` : ''}
-                        <button onclick="addToCart(${product.id})" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition" title="Add to Cart">
-                            <i class="fas fa-cart-plus"></i>
-                        </button>
+            <div class="product-content">
+                <div class="product-strain">${product.strain_type || 'Hybrid'}</div>
+                <h3 class="product-name">${product.name}</h3>
+                <div class="product-details">
+                    <div class="thc-content">
+                        <span class="thc-label">THC</span>
+                        <span class="thc-value">${product.thc_content || '20.0'}%</span>
                     </div>
+                    <div class="product-price">
+                        <div class="price-label">per oz</div>
+                        <div class="price-value">$${product.price || '250'}</div>
+                    </div>
+                </div>
+                <div class="product-actions">
+                    <button class="btn-add-cart" onclick="addToCart(${product.id}, '${product.name}', ${product.price})">
+                        <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                    </button>
+                    <button class="btn-view-details" onclick="showProductDetails(${product.id})">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
                 </div>
             </div>
         </div>
+    `).join('');
+}
+
+// Display sample products
+function displaySampleProducts(container) {
+    const sampleProducts = [
+        { id: 1, name: 'Purple Haze', strain_type: 'Sativa Dominant', thc_content: 22.5, price: 280, badge: 'Premium' },
+        { id: 2, name: 'OG Kush', strain_type: 'Indica', thc_content: 24.0, price: 300, badge: 'Top Shelf' },
+        { id: 3, name: 'Blue Dream', strain_type: 'Hybrid', thc_content: 21.0, price: 260, badge: 'Best Seller' },
+        { id: 4, name: 'Girl Scout Cookies', strain_type: 'Hybrid', thc_content: 23.0, price: 290, badge: 'Popular' },
+        { id: 5, name: 'Sour Diesel', strain_type: 'Sativa', thc_content: 22.0, price: 270, badge: 'Classic' },
+        { id: 6, name: 'Gorilla Glue #4', strain_type: 'Hybrid', thc_content: 25.0, price: 320, badge: 'Potent' },
+        { id: 7, name: 'Wedding Cake', strain_type: 'Indica Dominant', thc_content: 24.5, price: 310, badge: 'Premium' },
+        { id: 8, name: 'Jack Herer', strain_type: 'Sativa', thc_content: 20.5, price: 250, badge: 'Award Winner' },
+        { id: 9, name: 'Gelato', strain_type: 'Hybrid', thc_content: 23.5, price: 295, badge: 'Exotic' }
+    ];
+
+    container.innerHTML = sampleProducts.map(product => `
+        <div class="product-card hover-lift">
+            <div class="product-image">
+                <div class="h-64 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                    <i class="fas fa-cannabis text-6xl text-gray-700"></i>
+                </div>
+                <span class="product-badge">${product.badge}</span>
+            </div>
+            <div class="product-content">
+                <div class="product-strain">${product.strain_type}</div>
+                <h3 class="product-name">${product.name}</h3>
+                <div class="product-details">
+                    <div class="thc-content">
+                        <span class="thc-label">THC</span>
+                        <span class="thc-value">${product.thc_content}%</span>
+                    </div>
+                    <div class="product-price">
+                        <div class="price-label">per oz</div>
+                        <div class="price-value">$${product.price}</div>
+                    </div>
+                </div>
+                <div class="product-actions">
+                    <button class="btn-add-cart" onclick="addToCart(${product.id}, '${product.name}', ${product.price})">
+                        <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                    </button>
+                    <button class="btn-view-details" onclick="showProductDetails(${product.id})">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Add to cart
+function addToCart(productId, productName, price) {
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        cart.push({
+            id: productId,
+            name: productName,
+            price: price,
+            quantity: 1
+        });
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    showToast(`${productName} added to cart`);
+}
+
+// Show product details
+function showProductDetails(productId) {
+    // Placeholder for product details modal
+    showToast('Product details coming soon');
+}
+
+// Show toast notification
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-check-circle text-yellow-500 mr-3"></i>
+            <span>${message}</span>
+        </div>
     `;
-}
-
-function setupEventListeners() {
-    // Search input
-    document.getElementById('search-input').addEventListener('input', debounce((e) => {
-        filters.search = e.target.value;
-        loadProducts();
-    }, 500));
-    
-    // Category filters
-    document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('category-filter')) {
-            filters.category = e.target.value || null;
-            loadProducts();
-        }
-    });
-    
-    // Strain type filters
-    document.querySelectorAll('.strain-filter').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                filters.strainTypes.push(e.target.value);
-            } else {
-                filters.strainTypes = filters.strainTypes.filter(t => t !== e.target.value);
-            }
-            applyFilters();
-        });
-    });
-    
-    // THC filters
-    document.querySelectorAll('.thc-filter').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                filters.thcRanges.push(e.target.value);
-            } else {
-                filters.thcRanges = filters.thcRanges.filter(r => r !== e.target.value);
-            }
-            applyFilters();
-        });
-    });
-    
-    // Sort select
-    document.getElementById('sort-select').addEventListener('change', () => {
-        applyFilters();
-    });
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-async function addToCart(productId, quantity = 1) {
-    try {
-        const response = await fetch('/api/cart/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ productId, quantity })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification('Product added to cart', 'success');
-            updateCartCount();
-        } else {
-            showNotification(data.error || 'Failed to add to cart', 'error');
-        }
-    } catch (error) {
-        console.error('Failed to add to cart:', error);
-        showNotification('Failed to add to cart', 'error');
-    }
-}
-
-async function updateCartCount() {
-    try {
-        const response = await fetch('/api/cart', {
-            credentials: 'include'
-        });
-        const data = await response.json();
-        
-        const cartCount = document.getElementById('cart-count');
-        if (cartCount) {
-            if (data.count > 0) {
-                cartCount.textContent = data.count;
-                cartCount.classList.remove('hidden');
-            } else {
-                cartCount.classList.add('hidden');
-            }
-        }
-    } catch (error) {
-        console.error('Failed to update cart count:', error);
-    }
-}
-
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all ${
-        type === 'success' ? 'bg-green-500 text-white' :
-        type === 'error' ? 'bg-red-500 text-white' :
-        'bg-blue-500 text-white'
-    }`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
+    document.body.appendChild(toast);
     
     setTimeout(() => {
-        notification.remove();
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-function viewProductInfo(productId) {
-    // This would open a PDF viewer or modal with product information
-    // For now, just show a message
-    showNotification('Product information sheet will open here', 'info');
-}
+// Search functionality
+document.getElementById('search-input')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const products = document.querySelectorAll('.product-card');
+    
+    products.forEach(product => {
+        const name = product.querySelector('.product-name')?.textContent.toLowerCase() || '';
+        const strain = product.querySelector('.product-strain')?.textContent.toLowerCase() || '';
+        
+        if (name.includes(searchTerm) || strain.includes(searchTerm)) {
+            product.style.display = '';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+});
 
-function closeProductModal() {
-    document.getElementById('product-modal').classList.add('hidden');
-}
+// Sort functionality
+document.getElementById('sort-select')?.addEventListener('change', function(e) {
+    const sortBy = e.target.value;
+    const grid = document.getElementById('products-grid');
+    const products = Array.from(grid.querySelectorAll('.product-card'));
+    
+    products.sort((a, b) => {
+        switch(sortBy) {
+            case 'price-low':
+                return parseFloat(a.querySelector('.price-value').textContent.replace('$', '')) - 
+                       parseFloat(b.querySelector('.price-value').textContent.replace('$', ''));
+            case 'price-high':
+                return parseFloat(b.querySelector('.price-value').textContent.replace('$', '')) - 
+                       parseFloat(a.querySelector('.price-value').textContent.replace('$', ''));
+            case 'thc-high':
+                return parseFloat(b.querySelector('.thc-value').textContent.replace('%', '')) - 
+                       parseFloat(a.querySelector('.thc-value').textContent.replace('%', ''));
+            case 'name':
+                return a.querySelector('.product-name').textContent.localeCompare(
+                       b.querySelector('.product-name').textContent);
+            default:
+                return 0;
+        }
+    });
+    
+    grid.innerHTML = '';
+    products.forEach(product => grid.appendChild(product));
+});
 
-async function logout() {
-    try {
-        await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
-        window.location.href = '/';
-    } catch (error) {
-        console.error('Logout failed:', error);
-    }
-}
+// Initialize on load
+document.addEventListener('DOMContentLoaded', loadProducts);
