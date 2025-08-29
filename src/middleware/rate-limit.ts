@@ -10,15 +10,15 @@ interface RateLimitOptions {
 // In-memory store for rate limiting (in production, use Redis or KV)
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
-// Clean up expired entries periodically
-setInterval(() => {
+// Clean up expired entries on each request (Cloudflare Workers don't support setInterval)
+function cleanupExpiredEntries() {
   const now = Date.now();
   for (const [key, value] of requestCounts.entries()) {
     if (value.resetTime < now) {
       requestCounts.delete(key);
     }
   }
-}, 60000); // Clean every minute
+}
 
 export function createRateLimiter(options: RateLimitOptions) {
   const {
@@ -29,6 +29,11 @@ export function createRateLimiter(options: RateLimitOptions) {
   } = options;
 
   return async (c: Context, next: Next) => {
+    // Clean up expired entries periodically
+    if (Math.random() < 0.1) { // 10% chance to clean up
+      cleanupExpiredEntries();
+    }
+    
     const key = keyGenerator(c);
     const now = Date.now();
     
