@@ -1,13 +1,23 @@
 import { Context, Next } from 'hono'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = 'your-secret-key-change-in-production'
-
 export interface UserPayload {
   id: number
   email: string
   isAdmin: boolean
   isApproved: boolean
+}
+
+// Get JWT secret from environment variable, with fallback for local development
+function getJWTSecret(c: Context): string {
+  // In Cloudflare Workers, environment variables are accessed via c.env
+  const secret = c.env?.JWT_SECRET || process.env?.JWT_SECRET
+  
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not configured')
+  }
+  
+  return secret
 }
 
 export async function authMiddleware(c: Context, next: Next) {
@@ -18,7 +28,8 @@ export async function authMiddleware(c: Context, next: Next) {
       return c.json({ error: 'Unauthorized' }, 401)
     }
 
-    const payload = jwt.verify(token, JWT_SECRET) as UserPayload
+    const jwtSecret = getJWTSecret(c)
+    const payload = jwt.verify(token, jwtSecret) as UserPayload
     
     // Store user info in context
     c.set('user', payload)
@@ -29,8 +40,9 @@ export async function authMiddleware(c: Context, next: Next) {
   }
 }
 
-export function generateToken(user: UserPayload): string {
-  return jwt.sign(user, JWT_SECRET, { expiresIn: '7d' })
+export function generateToken(user: UserPayload, c: Context): string {
+  const jwtSecret = getJWTSecret(c)
+  return jwt.sign(user, jwtSecret, { expiresIn: '7d' })
 }
 
 export function getCookie(c: Context, name: string): string | undefined {

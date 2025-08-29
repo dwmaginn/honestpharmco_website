@@ -1,0 +1,38 @@
+name = "honestpharmco"
+main = "dist/_worker.js"
+compatibility_date = "2024-01-01"
+
+# Build configuration
+[build]
+command = "npm run build"
+
+# Environment variables (use wrangler secret for sensitive values)
+[vars]
+NODE_ENV = "production"
+
+# D1 Database bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "honestpharmco-db"
+database_id = "YOUR_DATABASE_ID"
+
+# KV Namespaces
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "YOUR_SESSIONS_KV_ID"
+
+[[kv_namespaces]]
+binding = "CART"
+id = "YOUR_CART_KV_ID"
+
+# R2 Bucket for images (future)
+# [[r2_buckets]]
+# binding = "IMAGES"
+# bucket_name = "honestpharmco-images"
+
+# Development overrides
+[env.development]
+vars = { NODE_ENV = "development" }
+
+# Use `wrangler secret put JWT_SECRET` to set the JWT secret securely
+# Use `wrangler secret put SENTRY_DSN` to set Sentry DSN for error tracking

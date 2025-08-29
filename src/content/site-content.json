@@ -1,0 +1,187 @@
+{
+  "site": {
+    "name": "Honest Pharm Co.",
+    "tagline": "Premium New York Cannabis Cultivator",
+    "description": "Licensed New York State cannabis cultivator providing premium flower, concentrates, and edibles to dispensaries statewide. Wholesale B2B platform for licensed retailers.",
+    "keywords": ["cannabis", "wholesale", "New York", "cultivator", "B2B", "dispensary", "flower", "concentrates", "edibles"],
+    "contact": {
+      "email": "wholesale@honestpharmco.com",
+      "phone": "1-800-HONEST-1",
+      "address": {
+        "street": "420 Cannabis Lane",
+        "city": "Albany",
+        "state": "NY",
+        "zip": "12207"
+      }
+    },
+    "social": {
+      "instagram": "https://instagram.com/honestpharmco",
+      "twitter": "https://twitter.com/honestpharmco",
+      "linkedin": "https://linkedin.com/company/honestpharmco"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Honest Pharm Co. - Premium New York Cannabis Cultivator",
+      "metaDescription": "Licensed NY State cannabis cultivator providing premium flower, concentrates & edibles. Wholesale B2B platform for licensed dispensaries. Lab-tested, sustainably grown.",
+      "hero": {
+        "headline": "New York's Premier Cannabis Cultivator",
+        "subheadline": "Wholesale Excellence for Licensed Dispensaries",
+        "ctaPrimary": {
+          "text": "View Catalog",
+          "link": "/catalog"
+        },
+        "ctaSecondary": {
+          "text": "Become a Partner",
+          "link": "/register"
+        }
+      },
+      "about": {
+        "title": "Growing Excellence Since 2021",
+        "content": "Honest Pharm Co. is a vertically integrated cannabis company focused on cultivation and wholesale distribution. Our state-of-the-art facility produces premium flower, concentrates, and edibles for New York's licensed dispensaries.",
+        "features": [
+          {
+            "icon": "fa-leaf",
+            "title": "Premium Genetics",
+            "description": "Carefully selected strains for optimal effects and terpene profiles"
+          },
+          {
+            "icon": "fa-flask",
+            "title": "Lab Tested",
+            "description": "Third-party tested for potency, pesticides, and contaminants"
+          },
+          {
+            "icon": "fa-truck",
+            "title": "Statewide Delivery",
+            "description": "Reliable distribution to dispensaries across New York State"
+          },
+          {
+            "icon": "fa-shield-alt",
+            "title": "Fully Licensed",
+            "description": "OCM licensed cultivator and distributor in compliance with NY regulations"
+          }
+        ]
+      }
+    },
+    "catalog": {
+      "title": "Product Catalog - Honest Pharm Co.",
+      "metaDescription": "Browse our premium cannabis product catalog. Wholesale flower, concentrates, and edibles for NY dispensaries. Competitive pricing and bulk ordering available.",
+      "header": {
+        "title": "Product Catalog",
+        "subtitle": "Premium Cannabis Products for Wholesale"
+      },
+      "filters": {
+        "categories": [
+          { "value": "flower", "label": "Flower" },
+          { "value": "concentrates", "label": "Concentrates" },
+          { "value": "edibles", "label": "Edibles" },
+          { "value": "prerolls", "label": "Pre-Rolls" }
+        ],
+        "strainTypes": [
+          { "value": "sativa", "label": "Sativa" },
+          { "value": "indica", "label": "Indica" },
+          { "value": "hybrid", "label": "Hybrid" }
+        ]
+      }
+    },
+    "login": {
+      "title": "Login - Honest Pharm Co.",
+      "metaDescription": "Login to your Honest Pharm Co. wholesale account. Access exclusive B2B pricing and place orders for your dispensary.",
+      "header": {
+        "title": "Wholesale Portal Login",
+        "subtitle": "Access your B2B account"
+      },
+      "form": {
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "your@dispensary.com",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "submitButton": "Sign In",
+        "registerLink": "Need an account? Register here",
+        "forgotLink": "Forgot your password?"
+      }
+    },
+    "register": {
+      "title": "Register - Honest Pharm Co.",
+      "metaDescription": "Register for a wholesale account with Honest Pharm Co. Get access to B2B pricing and ordering for licensed NY dispensaries.",
+      "header": {
+        "title": "Wholesale Account Registration",
+        "subtitle": "For Licensed NY Dispensaries Only"
+      }
+    }
+  },
+  "products": {
+    "featured": [
+      {
+        "id": 1,
+        "name": "Purple Haze",
+        "category": "flower",
+        "strainType": "sativa",
+        "thc": 22.5,
+        "cbd": 0.5,
+        "price": 2800,
+        "wholesalePrice": 2200,
+        "description": "Classic sativa with uplifting effects and sweet berry aroma",
+        "effects": ["Euphoric", "Creative", "Energetic"],
+        "flavors": ["Berry", "Sweet", "Earthy"]
+      },
+      {
+        "id": 2,
+        "name": "OG Kush",
+        "category": "flower",
+        "strainType": "indica",
+        "thc": 24.0,
+        "cbd": 0.3,
+        "price": 3000,
+        "wholesalePrice": 2400,
+        "description": "Legendary indica with powerful relaxation and pine notes",
+        "effects": ["Relaxed", "Happy", "Sleepy"],
+        "flavors": ["Pine", "Woody", "Lemon"]
+      },
+      {
+        "id": 3,
+        "name": "Blue Dream",
+        "category": "flower",
+        "strainType": "hybrid",
+        "thc": 21.0,
+        "cbd": 2.0,
+        "price": 2600,
+        "wholesalePrice": 2000,
+        "description": "Balanced hybrid with full-body relaxation and gentle cerebral invigoration",
+        "effects": ["Relaxed", "Happy", "Creative"],
+        "flavors": ["Berry", "Sweet", "Herbal"]
+      }
+    ]
+  },
+  "dispensaries": {
+    "locations": [
+      {
+        "name": "Green Valley Dispensary",
+        "address": "123 Main St, Manhattan, NY 10001",
+        "lat": 40.7484,
+        "lng": -73.9857,
+        "phone": "(212) 555-0100"
+      },
+      {
+        "name": "Brooklyn Botanicals",
+        "address": "456 Atlantic Ave, Brooklyn, NY 11201",
+        "lat": 40.6782,
+        "lng": -73.9442,
+        "phone": "(718) 555-0200"
+      },
+      {
+        "name": "Queens Cannabis Co",
+        "address": "789 Northern Blvd, Queens, NY 11372",
+        "lat": 40.7282,
+        "lng": -73.8317,
+        "phone": "(718) 555-0300"
+      }
+    ]
+  },
+  "legal": {
+    "ageVerification": "You must be 21 years or older to access this site.",
+    "disclaimer": "For licensed dispensaries only. All products are for wholesale distribution to OCM-licensed retailers.",
+    "termsOfService": "/terms",
+    "privacyPolicy": "/privacy"
+  }
+}

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import bcrypt from 'bcryptjs'
-import { generateToken, setCookie } from '../middleware/auth'
+import jwt from 'jsonwebtoken'
+import { generateToken, setCookie, getCookie } from '../middleware/auth'
 
 const authRoutes = new Hono()
 
@@ -80,7 +81,7 @@ authRoutes.post('/login', async (c) => {
       email: user.email as string,
       isAdmin: user.is_admin as boolean,
       isApproved: user.is_approved as boolean
-    })
+    }, c)
 
     // Set cookie
     setCookie(c, 'auth-token', token)
@@ -110,16 +111,21 @@ authRoutes.post('/logout', async (c) => {
 
 // Check auth status
 authRoutes.get('/check', async (c) => {
-  const token = c.req.header('Authorization')?.replace('Bearer ', '')
+  const token = getCookie(c, 'auth-token') || c.req.header('Authorization')?.replace('Bearer ', '')
   
   if (!token) {
     return c.json({ authenticated: false })
   }
 
   try {
-    // Verify token logic here
-    return c.json({ authenticated: true })
-  } catch {
+    const jwtSecret = c.env?.JWT_SECRET || process.env?.JWT_SECRET
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET not configured')
+    }
+    
+    const payload = jwt.verify(token, jwtSecret)
+    return c.json({ authenticated: true, user: payload })
+  } catch (error) {
     return c.json({ authenticated: false })
   }
 })

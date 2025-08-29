@@ -1,31 +1,22 @@
+import { generateHTMLHead, generateNavigation, generateFooter } from '../utils/page-template';
+import siteContent from '../content/site-content.json';
+
 export async function renderLoginPage() {
+  const { title, metaDescription } = siteContent.pages.login;
+  const { form } = siteContent.pages.login;
+  
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Honest Pharm Co.</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="/static/css/main.css" rel="stylesheet">
+    ${generateHTMLHead({ 
+      title, 
+      description: metaDescription,
+      keywords: siteContent.site.keywords
+    })}
 </head>
-<body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <div class="flex items-center">
-                    <img src="/static/images/logo.png" alt="Honest Pharm Co" class="h-16 w-auto">
-                    <span class="ml-3 text-2xl font-bold text-green-700">Honest Pharm Co.</span>
-                </div>
-                <div class="flex items-center space-x-8">
-                    <a href="/" class="text-gray-700 hover:text-green-600 font-medium">Home</a>
-                    <a href="/catalog" class="text-gray-700 hover:text-green-600 font-medium">Catalog</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+<body class="bg-black">
+    ${generateNavigation()}
 
     <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
@@ -38,14 +29,16 @@ export async function renderLoginPage() {
             <div id="login-form" class="bg-white shadow-xl rounded-lg p-8">
                 <form class="space-y-6" onsubmit="return handleLogin(event)">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <label for="email" class="block text-sm font-medium text-gray-300">${form.emailLabel}</label>
                         <input type="email" id="email" name="email" required 
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                               placeholder="${form.emailPlaceholder}"
+                               class="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gold/20 rounded-md shadow-sm text-white placeholder-gray-500 focus:outline-none focus:ring-gold focus:border-gold">
                     </div>
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <label for="password" class="block text-sm font-medium text-gray-300">${form.passwordLabel}</label>
                         <input type="password" id="password" name="password" required 
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                               placeholder="${form.passwordPlaceholder}"
+                               class="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gold/20 rounded-md shadow-sm text-white placeholder-gray-500 focus:outline-none focus:ring-gold focus:border-gold">
                     </div>
                     <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         Sign In
